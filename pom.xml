@@ -3,10 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>UnimportantInfo</groupId>
 
-    <artifactId>LaunchPad</artifactId>
+    <artifactId>DisorderlyMetronome</artifactId>
     <version>0.0.1</version>
-    <name>LaunchPad</name>
-    <description>A testing zone, intended to prepare your mod for liftoff.</description>
+    <name>DisorderlyMetronome</name>
+    <description>Experimental mod that introduces time based combat.</description>
     <!-- Change the above for mod information. -->
 
     <properties>
@@ -14,10 +14,10 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <SlayTheSpire.version>12-22-2020</SlayTheSpire.version>
         <ModTheSpire.version>3.18.2</ModTheSpire.version>
-        <ModID>launchpad</ModID>
+        <ModID>disorderlyMetronome</ModID>
 
         <!--CHANGE THIS TO YOUR STEAM INSTALLATION-->
-        <Steam.path>C:/Program Files (x86)/Steam/steamapps/</Steam.path>
+        <Steam.path>D:/SteamLibrary/steamapps/</Steam.path>
 
     </properties>
 

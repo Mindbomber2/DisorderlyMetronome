@@ -1,25 +1,20 @@
-package LaunchPad;
+package disorderlyMetronome;
 
 import basemod.BaseMod;
 import basemod.interfaces.*;
-import com.badlogic.gdx.Gdx;
-import com.evacipated.cardcrawl.mod.stslib.Keyword;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
-import com.google.gson.Gson;
-
-import java.nio.charset.StandardCharsets;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 @SpireInitializer
-public class LaunchPad implements PostInitializeSubscriber {
+public class DisorderlyMetronome implements PostInitializeSubscriber {
 
-    public static final String modID = "launchpad"; //TODO: Change this.
+    public static final String modID = "disorderlyMetronome";
 
     public static String makeID(String idText) {
         return modID + ":" + idText;
     }
 
-    public LaunchPad() {
+    public DisorderlyMetronome() {
         BaseMod.subscribe(this);
     }
 
@@ -32,7 +27,7 @@ public class LaunchPad implements PostInitializeSubscriber {
     }
 
     public static void initialize() {
-        LaunchPad thismod = new LaunchPad();
+        DisorderlyMetronome thismod = new DisorderlyMetronome();
     }
 
     @Override

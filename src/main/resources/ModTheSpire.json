@@ -2,7 +2,7 @@
   "modid": "${ModID}",
   "name": "${project.name}",
   "author_list": [
-    "you!"
+    "Mindbomber", "Squeen"
   ],
   "description": "${project.description}",
   "version": "${project.version}",

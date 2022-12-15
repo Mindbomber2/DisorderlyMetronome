@@ -1,4 +1,4 @@
-package LaunchPad.util;
+package disorderlyMetronome.util;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
