@@ -8,13 +8,10 @@ import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
 import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
-import discordInteraction.Main;
-import discordInteraction.ViewerMinion;
-import discordInteraction.battleTimer.constants.personalities.*;
-import kobting.friendlyminions.monsters.AbstractFriendlyMonster;
-import net.dv8tion.jda.api.entities.User;
+import disorderlyMetronome.battleTimer.constants.personalities.*;
 
-import static discordInteraction.battleTimer.constants.TurnTimers.*;
+
+import static disorderlyMetronome.battleTimer.constants.TurnTimers.*;
 
 public class AbstractMonsterPatch {
 
@@ -27,24 +24,22 @@ public class AbstractMonsterPatch {
             float f = 0;
             if (AbstractDungeon.isPlayerInDungeon()) {
                 AbstractPersonality currentPersonality;
-                if (__instance instanceof ViewerMinion) {
-                    f = TURN_TIMER_VIEWER;
-                } else {
-                    switch (__instance.type) {
-                        case BOSS:
-                            f = TURN_TIMER_BOSS;
-                            break;
-                        case ELITE:
-                            f = TURN_TIMER_ELITE;
-                            break;
-                        case NORMAL:
-                            f = TURN_TIMER_NORMAL;
-                            break;
-                        default:
-                            f = TURN_TIMER_NORMAL;
-                            break;
-                    }
+
+                switch (__instance.type) {
+                    case BOSS:
+                        f = TURN_TIMER_BOSS;
+                        break;
+                    case ELITE:
+                        f = TURN_TIMER_ELITE;
+                        break;
+                    case NORMAL:
+                        f = TURN_TIMER_NORMAL;
+                        break;
+                    default:
+                        f = TURN_TIMER_NORMAL;
+                        break;
                 }
+
                 if (AbstractDungeon.ascensionLevel <= 5) {
                     currentPersonality = new MEDIUM();
                 } else if (AbstractDungeon.ascensionLevel <= 10) {
@@ -104,23 +99,15 @@ public class AbstractMonsterPatch {
     public static class timerRenderPatch {
         @SpirePostfixPatch
         public static void timerCtorPatch(AbstractMonster __instance, SpriteBatch sb) {
-            if (__instance instanceof AbstractFriendlyMonster && !(__instance instanceof ViewerMinion)) {
-                return;
-            }
             if (!__instance.isDeadOrEscaped()) {
-                    DrawMonsterTimer.drawMonsterTimer(sb, __instance, patchIntoTimer.currentMonsterTimer.get(__instance),
-                            patchIntoTimer.currentMaxMonsterTimer.get(__instance));
+                DrawMonsterTimer.drawMonsterTimer(sb, __instance, patchIntoTimer.currentMonsterTimer.get(__instance),
+                        patchIntoTimer.currentMaxMonsterTimer.get(__instance));
             }
             if (!AbstractDungeon.isScreenUp) {
                 patchIntoTimer.currentMonsterTimer.set(__instance,
                         patchIntoTimer.currentMonsterTimer.get(__instance) - Gdx.graphics.getDeltaTime());
                 if (patchIntoTimer.currentMonsterTimer.get(__instance) <= 0f) {
-                    if (__instance instanceof AbstractFriendlyMonster) {
-                        User u = Main.battle.getUser((AbstractFriendlyMonster) __instance);
-                        Main.commandQueue.handleEndOfPlayerTurnLogic(u);
-                    } else {
-                        AbstractDungeon.actionManager.addToBottom(new monsterTakeTurnAction(__instance));
-                    }
+                    AbstractDungeon.actionManager.addToBottom(new monsterTakeTurnAction(__instance));
                     TurnbasedPowerStuff.triggerMonsterTurnPowers(__instance);
                     float calculatedTime = patchIntoTimer.calculateTime(__instance);
                     patchIntoTimer.currentMonsterTimer.set(__instance, calculatedTime);

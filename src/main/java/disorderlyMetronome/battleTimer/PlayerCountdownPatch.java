@@ -13,7 +13,7 @@ import javassist.CannotCompileException;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 
-import static discordInteraction.battleTimer.constants.TurnTimers.TURN_TIMER_PLAYER;
+import static disorderlyMetronome.battleTimer.constants.TurnTimers.TURN_TIMER_PLAYER;
 
 public class PlayerCountdownPatch {
 
@@ -77,8 +77,8 @@ public class PlayerCountdownPatch {
                             m.replace("{" +
                                     //$3 refers to the third input parameter of the method, in this case the message
                                     //You need the full package to your class for this to work
-                                    "$3 = discordInteraction.battleTimer.PlayerCountdownPatch.EnergyPanelModificationPatches.getMessage();" +
-                                    "$6 = discordInteraction.battleTimer.PlayerCountdownPatch.EnergyPanelModificationPatches.getColor();" +
+                                    "$3 = disorderlyMetronome.battleTimer.PlayerCountdownPatch.EnergyPanelModificationPatches.getMessage();" +
+                                    "$6 = disorderlyMetronome.battleTimer.PlayerCountdownPatch.EnergyPanelModificationPatches.getColor();" +
                                     //Call the method as normal
                                     "$proceed($$);" +
                                     "}");

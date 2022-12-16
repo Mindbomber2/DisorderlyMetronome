@@ -6,7 +6,7 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 @SpireInitializer
-public class DisorderlyMetronome implements PostInitializeSubscriber {
+public class DisorderlyMetronome implements PostInitializeSubscriber{
 
     public static final String modID = "disorderlyMetronome";
 
