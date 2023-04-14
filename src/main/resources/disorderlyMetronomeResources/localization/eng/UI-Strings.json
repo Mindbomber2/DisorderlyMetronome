@@ -1,0 +1,18 @@
+{
+  "disorderlyMetronome:OptionsMenu": {
+    "TEXT": [
+      "Player Turn Timer:",
+      "Normal Monster Turn Timer:",
+      "Elite Monster Turn Timer:",
+      "Boss Monster Turn Timer:"
+    ]
+  },
+  "disorderlyMetronome:VariableNames": {
+    "TEXT": [
+      "TURN_TIMER_PLAYER",
+      "TURN_TIMER_NORMAL",
+      "TURN_TIMER_ELITE",
+      "TURN_TIMER_BOSS"
+    ]
+  }
+}
