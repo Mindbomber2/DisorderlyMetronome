@@ -1,18 +1,16 @@
 {
   "disorderlyMetronome:OptionsMenu": {
     "TEXT": [
-      "Player Turn Timer:",
+      "Normal Mode or Cooldown Mode:",
       "Normal Monster Turn Timer:",
       "Elite Monster Turn Timer:",
-      "Boss Monster Turn Timer:"
-    ]
-  },
-  "disorderlyMetronome:VariableNames": {
-    "TEXT": [
-      "TURN_TIMER_PLAYER",
-      "TURN_TIMER_NORMAL",
-      "TURN_TIMER_ELITE",
-      "TURN_TIMER_BOSS"
+      "Boss Monster Turn Timer:",
+      "Monster Turn Timer Variance:",
+      "Base Turn Duration:",
+      "Turn Duration Bonus:",
+      "Base Hand Size:",
+      "Delay:",
+      "Cooldown Multiplier:"
     ]
   }
 }

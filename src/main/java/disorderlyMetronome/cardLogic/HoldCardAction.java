@@ -21,13 +21,8 @@ public class HoldCardAction extends AbstractGameAction {
 
     @Override
     public void update() {
-        if (PlayerCountdownPatch.patchIntoTimer.canPlayCard.get(AbstractDungeon.player) == true) {
-            //AbstractDungeon.player.useCard(card, monster, energyOnUse);
-            PlayerCountdownPatch.patchIntoTimer.canPlayCard.set(AbstractDungeon.player, false);
-        } else {
-            /*AbstractDungeon.actionManager.addToBottom(new HoldCardAction(card, monster, energyOnUse));
-            card.target_x = Settings.WIDTH/2;
-            card.target_y = Settings.HEIGHT/2;*/
+        if (PlayerCountdownPatch.patchIntoTimer.canPlayCard.get(AbstractDungeon.player) == false) {
+            AbstractCardPatch.patchSpireField.cardTarget.set(card, monster);
             AbstractDungeon.actionManager.addToTop(new ProjectSpecificCardAction(card));
         }
         this.isDone=true;

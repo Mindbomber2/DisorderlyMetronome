@@ -1,9 +1,6 @@
 package disorderlyMetronome;
 
-import basemod.BaseMod;
-import basemod.ModLabel;
-import basemod.ModMinMaxSlider;
-import basemod.ModPanel;
+import basemod.*;
 import basemod.interfaces.*;
 import com.evacipated.cardcrawl.modthespire.lib.SpireConfig;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
@@ -12,6 +9,7 @@ import com.megacrit.cardcrawl.core.Settings;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.localization.UIStrings;
+import disorderlyMetronome.util.DisorderlyConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,12 +51,14 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         BaseMod.subscribe(new DisorderlyMetronome());
         try {
             Properties defaults = new Properties();
-            defaults.put("TURN_TIMER_PLAYER", Float.toString(5F));
-            defaults.put("TURN_TIMER_NORMAL", Float.toString(25F));
-            defaults.put("TURN_TIMER_ELITE", Float.toString(30F));
-            defaults.put("TURN_TIMER_BOSS", Float.toString(40F));
+            for(DisorderlyConfig.ConfigurationVariable variable :
+                DisorderlyConfig.ConfigurationVariable.values()) {
+                defaults.put(variable.name(), Float.toString(variable.defaultValue));
+            }
+            defaults.put("COOLDOWN_MODE", Boolean.toString(false));
 
-            modConfig = new SpireConfig("DisorderlyMetronome", "Config", defaults);
+            modConfig = new SpireConfig("DisorderlyMetronome", "DisorderlyConfig", defaults);
+            DisorderlyConfig.loadConfig(modConfig);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,31 +66,54 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
 
     @Override
     public void receivePostInitialize() {
-        UIStrings UIStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenu"));
-        String[] TEXT = UIStrings.TEXT;
-        UIStrings VariableNames = CardCrawlGame.languagePack.getUIString(makeID("VariableNames"));
-        String[] VariableNamesText = VariableNames.TEXT;
+        UIStrings optionsTextStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenu"));
+        String[] optionsText = optionsTextStrings.TEXT;
+        List<DisorderlyConfig.ConfigurationVariable> configurationVariables = Arrays.asList(DisorderlyConfig.ConfigurationVariable.values());
         settingsPanel = new ModPanel();
 
-
         //Turn Timer Sliders
-        ArrayList<String> labelStrings = new ArrayList<>(Arrays.asList(TEXT));
+        ArrayList<String> labelStrings = new ArrayList<>(Arrays.asList(optionsText));
         float sliderOffset = getSliderPosition(labelStrings.subList(0,4));
         labelStrings.clear();
 
         float LAYOUT_Y = 740f;
         float LAYOUT_X = 400f;
         float SPACING_Y = 52f;
+        ModLabel modeLabel = new ModLabel(optionsText[0], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
+        ModToggleButton normalModeButton = new ModToggleButton(LAYOUT_X + sliderOffset +50, LAYOUT_Y -5, !modConfig.getBool("COOLDOWN_MODE"), true, settingsPanel, button -> {
+            modConfig.setBool("COOLDOWN_MODE", false);
+            try {
+                modConfig.save();
+                DisorderlyConfig.loadConfig(modConfig);
+            } catch (IOException e) {e.printStackTrace();}
+        });
 
-        for(int i=0;i<4;i++){
-            String varName = VariableNamesText[i];
-            ModLabel probabilityLabel = new ModLabel(TEXT[i], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
+        ModToggleButton cooldownModeButton = new ModToggleButton(LAYOUT_X + sliderOffset + 200, LAYOUT_Y -5, modConfig.getBool("COOLDOWN_MODE"), true, settingsPanel, button -> {
+            modConfig.setBool("COOLDOWN_MODE", true);
+            try {
+                modConfig.save();
+                DisorderlyConfig.loadConfig(modConfig);
+            } catch (IOException e) {e.printStackTrace();}
+        });
+        LAYOUT_Y-=SPACING_Y;
+        ModRadioButtonGroup modeSelection = new ModRadioButtonGroup();
+        modeSelection.addButton(normalModeButton);
+        modeSelection.addButton(cooldownModeButton);
+        settingsPanel.addUIElement(modeLabel);
+        settingsPanel.addUIElement(normalModeButton);
+        settingsPanel.addUIElement(cooldownModeButton);
+        for(int i=0;i<9;i++){
+            DisorderlyConfig.ConfigurationVariable variable = configurationVariables.get(i);
+            ModLabel probabilityLabel = new ModLabel(optionsText[i+1], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
             ModMinMaxSlider probabilitySlider = new ModMinMaxSlider("",
                     LAYOUT_X + sliderOffset,
                     LAYOUT_Y + 7f,
-                    1, 60, modConfig.getFloat(VariableNamesText[i]), "%.0f", settingsPanel, slider -> {
-                modConfig.setFloat(varName, Math.round(slider.getValue()));
-                try {modConfig.save();} catch (IOException e) {e.printStackTrace();}
+                    variable.min, variable.max, modConfig.getFloat(variable.name()), "%.0f", settingsPanel, slider -> {
+                modConfig.setFloat(variable.name(), Math.round(slider.getValue()));
+                try {
+                    modConfig.save();
+                    DisorderlyConfig.loadConfig(modConfig);
+                } catch (IOException e) {e.printStackTrace();}
             });
             settingsPanel.addUIElement(probabilityLabel);
             settingsPanel.addUIElement(probabilitySlider);

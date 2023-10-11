@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.DamageInfo;
+import com.megacrit.cardcrawl.core.AbstractCreature;
 import javassist.CtBehavior;
 
 public class AbstractCardPatch {
@@ -55,5 +56,6 @@ public class AbstractCardPatch {
     public static class patchSpireField {
         public static SpireField<Integer> currentCooldown = new SpireField<>(() -> 0);
         public static SpireField<Integer> maxCooldown = new SpireField<>(() -> 0);
+        public static SpireField<AbstractCreature> cardTarget = new SpireField<>(() -> null);
     }
 }

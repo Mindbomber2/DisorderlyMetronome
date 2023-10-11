@@ -66,7 +66,7 @@ public class ProjectedCardManager {
     }
 
     public static void playCards() {
-        //TODO has bugs if you open a screen, the cards darken and don't re-lighten
+        //TODO has bugs if you open a screen, the cards darken and don't re-lighten. For example Tools of Trade. Limbo fading out is the reason
         for (AbstractCard card : cards.group) {
             AbstractDungeon.player.limbo.group.add(card);
             AbstractDungeon.actionManager.addToBottom(new AbstractGameAction() {
@@ -77,8 +77,7 @@ public class ProjectedCardManager {
                     card.targetDrawScale = 0.75F;
                     card.applyPowers();
                     ProjectedCardField.projectedField.set(card, true);
-                    //AbstractDungeon.actionManager.addCardQueueItem(new CardQueueItem(card, true, EnergyPanel.getCurrentEnergy(), false, true), false);
-                    AbstractDungeon.actionManager.addToBottom(new NewQueueCardAction(card, true, false, true));
+                    AbstractDungeon.actionManager.addToBottom(new NewQueueCardAction(card, AbstractCardPatch.patchSpireField.cardTarget.get(card), false, true));
                     AbstractDungeon.actionManager.addToBottom(new UnlimboAction(card));
                     //}
 
