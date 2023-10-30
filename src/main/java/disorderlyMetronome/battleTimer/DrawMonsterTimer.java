@@ -12,10 +12,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
 public class DrawMonsterTimer {
-    public static float hbYOffset = 60 * Settings.scale;
     public static float HEALTH_BAR_HEIGHT = 20.0F * Settings.scale;
-    public static float HEALTH_BAR_OFFSET_Y = -28.0F * Settings.scale;
-    public static float VIEWER_MONSTER_WIDTH = 64F;
 
     public static void drawMonsterTimer(SpriteBatch sb, AbstractMonster __instance, float currentTimer, float maxTimer){
         float x = __instance.hb.cX - __instance.hb.width / 2.0F;

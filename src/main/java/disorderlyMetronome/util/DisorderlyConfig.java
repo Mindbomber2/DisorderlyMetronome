@@ -17,6 +17,7 @@ public abstract class DisorderlyConfig {
     public static float turnDurationBonus = -1f;
 
     //cooldown mod config
+    //TODO: integrate cdmHandSize
     public static float cdmHandSize = -1f;
     public static float cdmDelay = -1f;
     public static float cdmCooldownMultiplier = -1f;

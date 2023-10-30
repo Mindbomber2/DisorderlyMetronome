@@ -9,11 +9,12 @@ import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.powers.AbstractPower;
 import com.megacrit.cardcrawl.ui.panels.EnergyPanel;
+import disorderlyMetronome.DisorderlyMetronome;
+import disorderlyMetronome.util.DisorderlyConfig;
 import javassist.CannotCompileException;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 
-import static disorderlyMetronome.battleTimer.constants.TurnTimers.TURN_TIMER_PLAYER;
 
 public class PlayerCountdownPatch {
 
@@ -23,8 +24,23 @@ public class PlayerCountdownPatch {
         public static SpireField<Float> currentPlayerTimer = new SpireField<>(() -> 10f);
         public static SpireField<Float> currentMaxPlayerTimer = new SpireField<>(() -> 10f);
 
+        //TODO: fix calculation for first turn. Probably use start of combat hook
         public static float calculateTime(AbstractPlayer __instance) {
-            return TURN_TIMER_PLAYER;
+            if (DisorderlyConfig.cooldownMode) {
+                return DisorderlyConfig.cdmDelay;
+            } else {
+                if (__instance.energy != null) {
+                    return DisorderlyConfig.baseTurnDuration + DisorderlyConfig.turnDurationBonus * __instance.energy.energyMaster;
+                } else {
+                    return DisorderlyConfig.baseTurnDuration + DisorderlyConfig.turnDurationBonus * 3;
+                }
+            }
+        }
+
+        public static void resetTimer(AbstractPlayer p) {
+            float calculatedTime = patchIntoTimer.calculateTime(p);
+            patchIntoTimer.currentPlayerTimer.set(p, calculatedTime);
+            patchIntoTimer.currentMaxPlayerTimer.set(p, calculatedTime);
         }
     }
 
@@ -46,7 +62,7 @@ public class PlayerCountdownPatch {
     }
 
 
-//   ty Alison again
+    //   ty Alison again
     public static class EnergyPanelModificationPatches {
 
         public static String getMessage() {
@@ -98,19 +114,29 @@ public class PlayerCountdownPatch {
                 patchIntoTimer.currentPlayerTimer.set(p,
                         patchIntoTimer.currentPlayerTimer.get(p) - Gdx.graphics.getDeltaTime());
                 if (patchIntoTimer.currentPlayerTimer.get(p) <= 0f) {
-                    patchIntoTimer.canPlayCard.set(p, true);
-                    AbstractDungeon.actionManager.callEndTurnEarlySequence();
-                    for(AbstractPower power : AbstractDungeon.player.powers){
-                        power.atEndOfRound();
-                    }
-                    for(AbstractCard card : AbstractDungeon.player.hand.group){
-                        if(card.retain||card.selfRetain){
-                            card.onRetained();
+                    if (DisorderlyConfig.cooldownMode) {
+                        patchIntoTimer.canPlayCard.set(p, true);
+                        AbstractDungeon.actionManager.callEndTurnEarlySequence();
+                        for (AbstractPower power : p.powers) {
+                            power.atEndOfRound();
+                        }
+                        for (AbstractCard card : p.hand.group) {
+                            if (card.retain || card.selfRetain) {
+                                card.onRetained();
+                            }
+                        }
+                    } else {
+                        AbstractDungeon.actionManager.callEndTurnEarlySequence();
+                        for (AbstractPower power : p.powers) {
+                            power.atEndOfRound();
+                        }
+                        for (AbstractCard card : p.hand.group) {
+                            if (card.retain || card.selfRetain) {
+                                card.onRetained();
+                            }
                         }
                     }
-                    float calculatedTime = patchIntoTimer.calculateTime(p);
-                    patchIntoTimer.currentPlayerTimer.set(p, calculatedTime);
-                    patchIntoTimer.currentMaxPlayerTimer.set(p, calculatedTime);
+                    patchIntoTimer.resetTimer(p);
                 }
             }
         }

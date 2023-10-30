@@ -12,10 +12,7 @@ import com.megacrit.cardcrawl.localization.UIStrings;
 import disorderlyMetronome.util.DisorderlyConfig;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 @SpireInitializer
@@ -64,6 +61,12 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         }
     }
 
+    private float LAYOUT_Y = 740f;
+    private float ORIGINAL_LAYOUT_Y = 740f;
+    private float LAYOUT_X = 400f;
+    private float SPACING_Y = 52f;
+    private float curPage = 1;
+
     @Override
     public void receivePostInitialize() {
         UIStrings optionsTextStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenu"));
@@ -76,9 +79,7 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         float sliderOffset = getSliderPosition(labelStrings.subList(0,4));
         labelStrings.clear();
 
-        float LAYOUT_Y = 740f;
-        float LAYOUT_X = 400f;
-        float SPACING_Y = 52f;
+
         ModLabel modeLabel = new ModLabel(optionsText[0], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
         ModToggleButton normalModeButton = new ModToggleButton(LAYOUT_X + sliderOffset +50, LAYOUT_Y -5, !modConfig.getBool("COOLDOWN_MODE"), true, settingsPanel, button -> {
             modConfig.setBool("COOLDOWN_MODE", false);
@@ -142,4 +143,43 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         return longest + 40f;
     }
 
+    private final float pageOffset = 12000f;
+    private HashMap<Integer, ArrayList<IUIElement>> pages = new HashMap<Integer, ArrayList<IUIElement>>() {{
+        put(1, new ArrayList<>());
+    }};
+    private float elementSpace = 50f;
+    private float yThreshold = LAYOUT_Y - elementSpace * 12;
+
+    private void registerUIElement(IUIElement elem, boolean decrement) {
+        settingsPanel.addUIElement(elem);
+
+        int page = pages.size() + (yThreshold == LAYOUT_Y ? 1 : 0);
+        if (!pages.containsKey(page)) {
+            pages.put(page, new ArrayList<>());
+            LAYOUT_Y = ORIGINAL_LAYOUT_Y;
+            elem.setY(LAYOUT_Y);
+        }
+        if (page > curPage) {
+            elem.setX(elem.getX() + pageOffset);
+        }
+        pages.get(page).add(elem);
+
+        if (decrement) {
+            LAYOUT_Y -= elementSpace;
+        }
+    }
+
+    private void registerUIElement(IUIElement elem, int page) {
+        settingsPanel.addUIElement(elem);
+        if (!pages.containsKey(page)) {
+            pages.put(page, new ArrayList<>());
+            LAYOUT_Y = ORIGINAL_LAYOUT_Y;
+            elem.setY(LAYOUT_Y);
+        }
+        if (page > curPage) {
+            elem.setX(elem.getX() + pageOffset);
+        }
+        pages.get(page).add(elem);
+
+    }
 }

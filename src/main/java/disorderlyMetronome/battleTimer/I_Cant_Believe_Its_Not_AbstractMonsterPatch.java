@@ -6,11 +6,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpireField;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
-import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
-import disorderlyMetronome.battleTimer.constants.personalities.*;
+import com.megacrit.cardcrawl.monsters.AbstractMonster;
+import disorderlyMetronome.util.DisorderlyConfig;
 
-import static disorderlyMetronome.battleTimer.constants.TurnTimers.*;
+import java.util.Random;
+
 
 public class I_Cant_Believe_Its_Not_AbstractMonsterPatch {
 
@@ -19,41 +20,28 @@ public class I_Cant_Believe_Its_Not_AbstractMonsterPatch {
         public static SpireField<Float> currentMonsterTimer = new SpireField<>(() -> 10f);
         public static SpireField<Float> currentMaxMonsterTimer = new SpireField<>(() -> 10f);
 
-        public static float calculateTime(CustomMonster __instance) {
+        public static float calculateTime(AbstractMonster __instance) {
             float f = 0;
-            if(AbstractDungeon.isPlayerInDungeon()) {
-                AbstractPersonality currentPersonality;
+            if (AbstractDungeon.isPlayerInDungeon()) {
                 switch (__instance.type) {
                     case BOSS:
-                        f = TURN_TIMER_BOSS;
+                        f = DisorderlyConfig.monsterTimerBoss;
                         break;
                     case ELITE:
-                        f = TURN_TIMER_ELITE;
+                        f = DisorderlyConfig.monsterTimerElite;
                         break;
                     case NORMAL:
-                        f = TURN_TIMER_NORMAL;
+                        f = DisorderlyConfig.monsterTimerNormal;
                         break;
                     default:
-                        f = TURN_TIMER_NORMAL;
+                        f = DisorderlyConfig.monsterTimerNormal;
                         break;
                 }
-                if (AbstractDungeon.ascensionLevel <= 5) { currentPersonality = new MEDIUM();
-                } else if (AbstractDungeon.ascensionLevel <= 10) { currentPersonality = new HARD();
-                } else if (AbstractDungeon.ascensionLevel <= 15) { currentPersonality = new VERYHARD();
-                } else { currentPersonality = new INSANE(); }
-                for (int i = 1; i <= GameActionManager.turn; i += 1) {
-                    if (i % 2 == 0) { currentPersonality = currentPersonality.nextPersonality(); }
-                }
-                f += currentPersonality.calculateTimeValue();
-                try {
-                    if(AbstractDungeon.monsterRng.randomBoolean()){ f /= 1.5f; }
-                    else { f /= 1.45f; }
-                }
-                catch (Exception e){ f /= 1.45f; }
+                Random random = new Random();
+                f += random.nextInt((int)DisorderlyConfig.monsterTimerVariance*2) - DisorderlyConfig.monsterTimerVariance;
             }
             return f;
         }
-
     }
 
     @SpirePatch(clz = CustomMonster.class, method = SpirePatch.CONSTRUCTOR,

@@ -10,6 +10,7 @@ import com.megacrit.cardcrawl.actions.utility.UnlimboAction;
 import com.megacrit.cardcrawl.actions.utility.UseCardAction;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.cards.CardGroup;
+import com.megacrit.cardcrawl.cards.CardQueueItem;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.core.AbstractCreature;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
@@ -66,7 +67,6 @@ public class ProjectedCardManager {
     }
 
     public static void playCards() {
-        //TODO has bugs if you open a screen, the cards darken and don't re-lighten. For example Tools of Trade. Limbo fading out is the reason
         for (AbstractCard card : cards.group) {
             AbstractDungeon.player.limbo.group.add(card);
             AbstractDungeon.actionManager.addToBottom(new AbstractGameAction() {
@@ -79,6 +79,14 @@ public class ProjectedCardManager {
                     ProjectedCardField.projectedField.set(card, true);
                     AbstractDungeon.actionManager.addToBottom(new NewQueueCardAction(card, AbstractCardPatch.patchSpireField.cardTarget.get(card), false, true));
                     AbstractDungeon.actionManager.addToBottom(new UnlimboAction(card));
+                    AbstractDungeon.actionManager.addToBottom(new AbstractGameAction() {
+                        @Override
+                        public void update() {
+                            card.unfadeOut();
+                            card.fadingOut=false;
+                            this.isDone = true;
+                        }
+                    });
                     //}
 
                     this.isDone = true;
