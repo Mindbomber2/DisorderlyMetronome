@@ -17,7 +17,7 @@ import disorderlyMetronome.util.DisorderlyConfig;
 public class StopStartOfTurnDraw {
     @SpirePrefixPatch
     public static SpireReturn<?> skipStartOfTurnDraw(DrawCardAction __instance, boolean endTurnDraw) {
-        if (DisorderlyConfig.cooldownMode) {
+        if (DisorderlyConfig.gameMode== DisorderlyConfig.GameMode.COOLDOWN || DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY) {
             if (endTurnDraw && !(AbstractDungeon.actionManager.turn == 1)) {
                 __instance.isDone = true;
                 return SpireReturn.Return();

@@ -10,7 +10,7 @@ import disorderlyMetronome.util.DisorderlyConfig;
 public class SkipEndOfTurnDiscard {
     @SpirePrefixPatch
     public static SpireReturn<?> skipEndOfTurnDiscard(DiscardAtEndOfTurnAction __instance) {
-        if(DisorderlyConfig.cooldownMode) {
+        if(DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY || DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN) {
             __instance.isDone = true;
             return SpireReturn.Return();
         } else {

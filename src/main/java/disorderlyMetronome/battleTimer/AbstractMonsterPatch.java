@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpireField;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePatch;
 import com.evacipated.cardcrawl.modthespire.lib.SpirePostfixPatch;
-import com.megacrit.cardcrawl.actions.GameActionManager;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
 import disorderlyMetronome.util.DisorderlyConfig;
@@ -33,8 +32,7 @@ public class AbstractMonsterPatch {
                         f = DisorderlyConfig.monsterTimerNormal;
                         break;
                     default:
-                        f = DisorderlyConfig.monsterTimerNormal;
-                        break;
+                       throw new IllegalArgumentException("Wtf. New Monster Type just dropped");
                 }
 
                 Random random = new Random();
@@ -75,7 +73,7 @@ public class AbstractMonsterPatch {
         @SpirePostfixPatch
         public static void timerCtorPatch(AbstractMonster __instance, SpriteBatch sb) {
             if (!__instance.isDeadOrEscaped()) {
-                DrawMonsterTimer.drawMonsterTimer(sb, __instance, patchIntoTimer.currentMonsterTimer.get(__instance),
+                DrawHealthbarTimers.drawMonsterTimer(sb, __instance, patchIntoTimer.currentMonsterTimer.get(__instance),
                         patchIntoTimer.currentMaxMonsterTimer.get(__instance));
             }
             if (!AbstractDungeon.isScreenUp) {

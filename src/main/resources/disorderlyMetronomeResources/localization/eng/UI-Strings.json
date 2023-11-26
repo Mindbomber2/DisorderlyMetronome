@@ -1,13 +1,28 @@
 {
-  "disorderlyMetronome:OptionsMenu": {
+  "disorderlyMetronome:OptionsMenuGeneral": {
     "TEXT": [
-      "Normal Mode or Cooldown Mode:",
+      "Energy, Time Attack or Cooldown Mode:",
       "Normal Monster Turn Timer:",
       "Elite Monster Turn Timer:",
       "Boss Monster Turn Timer:",
-      "Monster Turn Timer Variance:",
+      "Monster Turn Timer Variance:"
+    ]
+  },
+  "disorderlyMetronome:OptionsMenuEnergyMode": {
+    "TEXT": [
+      "Energy Gain Rate:",
+      "Refresh After Gaining X Energy:",
+      "Redraw Amount:"
+    ]
+  },
+  "disorderlyMetronome:OptionsMenuTimeAttackMode": {
+    "TEXT": [
       "Base Turn Duration:",
-      "Turn Duration Bonus:",
+      "Turn Duration Bonus Per Energy:"
+    ]
+  },
+  "disorderlyMetronome:OptionsMenuCooldownMode": {
+    "TEXT": [
       "Base Hand Size:",
       "Delay:",
       "Cooldown Multiplier:"

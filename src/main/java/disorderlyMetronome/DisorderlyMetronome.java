@@ -2,6 +2,7 @@ package disorderlyMetronome;
 
 import basemod.*;
 import basemod.interfaces.*;
+import com.badlogic.gdx.graphics.Color;
 import com.evacipated.cardcrawl.modthespire.lib.SpireConfig;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
@@ -10,6 +11,7 @@ import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.localization.UIStrings;
 import disorderlyMetronome.util.DisorderlyConfig;
+import org.lwjgl.BufferUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -52,7 +54,7 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
                 DisorderlyConfig.ConfigurationVariable.values()) {
                 defaults.put(variable.name(), Float.toString(variable.defaultValue));
             }
-            defaults.put("COOLDOWN_MODE", Boolean.toString(false));
+            defaults.put("GAMEMODE", DisorderlyConfig.GameMode.ENERGY.name());
 
             modConfig = new SpireConfig("DisorderlyMetronome", "DisorderlyConfig", defaults);
             DisorderlyConfig.loadConfig(modConfig);
@@ -61,51 +63,98 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         }
     }
 
-    private float LAYOUT_Y = 740f;
-    private float ORIGINAL_LAYOUT_Y = 740f;
+    private float LAYOUT_Y = 750f;
+    private float ORIGINAL_LAYOUT_Y = 750f;
     private float LAYOUT_X = 400f;
     private float SPACING_Y = 52f;
-    private float curPage = 1;
+    private int curPage = 1;
+    private List<DisorderlyConfig.ConfigurationVariable> configurationVariables = Arrays.asList(DisorderlyConfig.ConfigurationVariable.values());
 
     @Override
     public void receivePostInitialize() {
-        UIStrings optionsTextStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenu"));
-        String[] optionsText = optionsTextStrings.TEXT;
-        List<DisorderlyConfig.ConfigurationVariable> configurationVariables = Arrays.asList(DisorderlyConfig.ConfigurationVariable.values());
+        UIStrings optionsMenuGeneralStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenuGeneral"));
+        String[] optionsMenuGeneralText = optionsMenuGeneralStrings.TEXT;
+        UIStrings optionsMenuEnergyModeStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenuEnergyMode"));
+        String[] optionsMenuEnergyModeText = optionsMenuEnergyModeStrings.TEXT;
+        UIStrings optionsMenuTimeAttackModeStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenuTimeAttackMode"));
+        String[] optionsMenuTimeAttackModeText = optionsMenuTimeAttackModeStrings.TEXT;
+        UIStrings optionsMenuCooldownModeStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenuCooldownMode"));
+        String[] optionsMenuCooldownModeText = optionsMenuCooldownModeStrings.TEXT;
+
         settingsPanel = new ModPanel();
 
-        //Turn Timer Sliders
-        ArrayList<String> labelStrings = new ArrayList<>(Arrays.asList(optionsText));
-        float sliderOffset = getSliderPosition(labelStrings.subList(0,4));
-        labelStrings.clear();
+        float sliderOffset = getSliderPosition(Arrays.asList(optionsMenuGeneralText));
 
 
-        ModLabel modeLabel = new ModLabel(optionsText[0], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
-        ModToggleButton normalModeButton = new ModToggleButton(LAYOUT_X + sliderOffset +50, LAYOUT_Y -5, !modConfig.getBool("COOLDOWN_MODE"), true, settingsPanel, button -> {
-            modConfig.setBool("COOLDOWN_MODE", false);
+        ModLabel modeLabel = new ModLabel(optionsMenuGeneralText[0], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
+        ModToggleButton energyModeButton = new ModToggleButton(LAYOUT_X + sliderOffset + 50, LAYOUT_Y -5, modConfig.getString("GAMEMODE").equals(DisorderlyConfig.GameMode.ENERGY.name()), true, settingsPanel, button -> {
+            modConfig.setString("GAMEMODE", DisorderlyConfig.GameMode.ENERGY.name());
             try {
                 modConfig.save();
                 DisorderlyConfig.loadConfig(modConfig);
             } catch (IOException e) {e.printStackTrace();}
         });
 
-        ModToggleButton cooldownModeButton = new ModToggleButton(LAYOUT_X + sliderOffset + 200, LAYOUT_Y -5, modConfig.getBool("COOLDOWN_MODE"), true, settingsPanel, button -> {
-            modConfig.setBool("COOLDOWN_MODE", true);
+        ModToggleButton timeAttackModeButton = new ModToggleButton(LAYOUT_X + sliderOffset +150, LAYOUT_Y -5, modConfig.getString("GAMEMODE").equals(DisorderlyConfig.GameMode.TIMEATTACK.name()), true, settingsPanel, button -> {
+            modConfig.setString("GAMEMODE", DisorderlyConfig.GameMode.TIMEATTACK.name());
             try {
                 modConfig.save();
                 DisorderlyConfig.loadConfig(modConfig);
             } catch (IOException e) {e.printStackTrace();}
         });
+
+        ModToggleButton cooldownModeButton = new ModToggleButton(LAYOUT_X + sliderOffset + 250, LAYOUT_Y -5, modConfig.getString("GAMEMODE").equals(DisorderlyConfig.GameMode.COOLDOWN.name()), true, settingsPanel, button -> {
+            modConfig.setString("GAMEMODE", DisorderlyConfig.GameMode.COOLDOWN.name());
+            try {
+                modConfig.save();
+                DisorderlyConfig.loadConfig(modConfig);
+            } catch (IOException e) {e.printStackTrace();}
+        });
+
         LAYOUT_Y-=SPACING_Y;
         ModRadioButtonGroup modeSelection = new ModRadioButtonGroup();
-        modeSelection.addButton(normalModeButton);
+        modeSelection.addButton(energyModeButton);
+        modeSelection.addButton(timeAttackModeButton);
         modeSelection.addButton(cooldownModeButton);
-        settingsPanel.addUIElement(modeLabel);
-        settingsPanel.addUIElement(normalModeButton);
-        settingsPanel.addUIElement(cooldownModeButton);
-        for(int i=0;i<9;i++){
-            DisorderlyConfig.ConfigurationVariable variable = configurationVariables.get(i);
-            ModLabel probabilityLabel = new ModLabel(optionsText[i+1], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
+        registerUIElement(modeLabel, 1);
+        registerUIElement(energyModeButton, 1);
+        registerUIElement(timeAttackModeButton, 1);
+        registerUIElement(cooldownModeButton, 1);
+        int offset = 1;
+        addPageOptions(Arrays.copyOfRange(optionsMenuGeneralText, 1 ,optionsMenuGeneralText.length), 1, offset);
+        offset+= optionsMenuGeneralText.length-1;
+        LAYOUT_Y=ORIGINAL_LAYOUT_Y;
+        addPageOptions(optionsMenuEnergyModeText, 2, offset);
+        offset+= optionsMenuEnergyModeText.length;
+        LAYOUT_Y=ORIGINAL_LAYOUT_Y;
+        addPageOptions(optionsMenuTimeAttackModeText, 3, offset);
+        offset+= optionsMenuTimeAttackModeText.length;
+        LAYOUT_Y=ORIGINAL_LAYOUT_Y;
+        addPageOptions(optionsMenuCooldownModeText, 4, offset);
+
+
+        ModLabeledButton FlipPageBtn = new ModLabeledButton("Next Page", LAYOUT_X + 450f, ORIGINAL_LAYOUT_Y + 45f, Settings.CREAM_COLOR, Color.WHITE, FontHelper.cardEnergyFont_L, settingsPanel,
+                    button ->
+                    {
+                        if (pages.containsKey(curPage + 1)) {
+                            changePage(curPage + 1);
+                        } else {
+                            changePage(1);
+                        }
+                    });
+            settingsPanel.addUIElement(FlipPageBtn);
+
+
+
+        BaseMod.registerModBadge(ImageMaster.loadImage(modID + "Resources/images/ui/chain48.png"), modID, "Mindbomber", "", settingsPanel);
+    }
+
+    private void addPageOptions(String[] optionsText, int page, int offset) {
+        float sliderOffset = getSliderPosition(Arrays.asList(optionsText));
+
+        for(int i=0;i< optionsText.length;i++){
+            DisorderlyConfig.ConfigurationVariable variable = configurationVariables.get(i+offset-1);
+            ModLabel probabilityLabel = new ModLabel(optionsText[i], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
             ModMinMaxSlider probabilitySlider = new ModMinMaxSlider("",
                     LAYOUT_X + sliderOffset,
                     LAYOUT_Y + 7f,
@@ -116,14 +165,10 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
                     DisorderlyConfig.loadConfig(modConfig);
                 } catch (IOException e) {e.printStackTrace();}
             });
-            settingsPanel.addUIElement(probabilityLabel);
-            settingsPanel.addUIElement(probabilitySlider);
+            registerUIElement(probabilityLabel, page);
+            registerUIElement(probabilitySlider, page);
             LAYOUT_Y-=SPACING_Y;
         }
-
-
-
-        BaseMod.registerModBadge(ImageMaster.loadImage(modID + "Resources/images/ui/chain48.png"), modID, "Mindbomber", "", settingsPanel);
     }
 
     private void saveConfig() {
@@ -180,6 +225,16 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
             elem.setX(elem.getX() + pageOffset);
         }
         pages.get(page).add(elem);
+    }
 
+    private void changePage(int i) {
+        for (IUIElement e : pages.get(curPage)) {
+            e.setX(e.getX() + pageOffset);
+        }
+
+        for (IUIElement e : pages.get(i)) {
+            e.setX(e.getX() - pageOffset);
+        }
+        curPage = i;
     }
 }

@@ -15,7 +15,7 @@ public class AbstractCardPatch {
     public static class patchConstructor {
         @SpirePostfixPatch
         public static void changeCostToCooldown(AbstractCard __instance) {
-            if (DisorderlyConfig.cooldownMode) {
+            if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN) {
                 if (patchSpireField.maxCooldown.get(__instance) == 0) {
                     int cardCooldown = __instance.cost;
                     switch (cardCooldown) {
@@ -43,7 +43,7 @@ public class AbstractCardPatch {
     public static class FixEnergyRenderPls {
         @SpireInsertPatch(locator = Locator.class, localvars = {"text"})
         public static void pls(AbstractCard __instance, SpriteBatch sb, @ByRef String[] text) {
-            if (DisorderlyConfig.cooldownMode) {
+            if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN) {
                 text[0] = String.valueOf(patchSpireField.currentCooldown.get(__instance));
             }
         }

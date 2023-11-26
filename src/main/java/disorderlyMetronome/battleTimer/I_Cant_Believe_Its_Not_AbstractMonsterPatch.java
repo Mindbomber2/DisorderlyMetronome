@@ -74,7 +74,7 @@ public class I_Cant_Believe_Its_Not_AbstractMonsterPatch {
         @SpirePostfixPatch
         public static void timerCtorPatch(CustomMonster __instance, SpriteBatch sb) {
             if(!__instance.isDeadOrEscaped()) {
-                DrawMonsterTimer.drawMonsterTimer(sb, __instance, patchIntoTimer.currentMonsterTimer.get(__instance),
+                DrawHealthbarTimers.drawMonsterTimer(sb, __instance, patchIntoTimer.currentMonsterTimer.get(__instance),
                         patchIntoTimer.currentMaxMonsterTimer.get(__instance));
             }
             if(!AbstractDungeon.isScreenUp) {

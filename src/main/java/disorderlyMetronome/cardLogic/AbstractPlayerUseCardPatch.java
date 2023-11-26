@@ -16,12 +16,12 @@ public class AbstractPlayerUseCardPatch {
     public static class patchConstructor {
         @SpirePrefixPatch
         public static SpireReturn<Void> stopPlay(AbstractPlayer __instance, AbstractCard c, AbstractMonster monster, int energyOnUse) {
-            if (DisorderlyConfig.cooldownMode) {
-                if (PlayerCountdownPatch.patchIntoTimer.canPlayCard.get(AbstractDungeon.player) == false) {
+            if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN) {
+                if (PlayerCountdownPatch.PatchIntoTimer.canPlayCard.get(AbstractDungeon.player) == false) {
                     AbstractDungeon.actionManager.addToBottom(new HoldCardAction(c, monster, energyOnUse));
                     return SpireReturn.Return();
                 } else {
-                    PlayerCountdownPatch.patchIntoTimer.canPlayCard.set(AbstractDungeon.player, false);
+                    PlayerCountdownPatch.PatchIntoTimer.canPlayCard.set(AbstractDungeon.player, false);
                     AbstractDungeon.actionManager.addToBottom(new DrawCardAction(1));
                     CooldownManager.reduceCooldowns();
                     return SpireReturn.Continue();
