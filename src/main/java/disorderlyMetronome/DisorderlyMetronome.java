@@ -7,11 +7,13 @@ import com.evacipated.cardcrawl.modthespire.lib.SpireConfig;
 import com.evacipated.cardcrawl.modthespire.lib.SpireInitializer;
 import com.megacrit.cardcrawl.core.CardCrawlGame;
 import com.megacrit.cardcrawl.core.Settings;
+import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.helpers.FontHelper;
 import com.megacrit.cardcrawl.helpers.ImageMaster;
 import com.megacrit.cardcrawl.localization.UIStrings;
+import com.megacrit.cardcrawl.rooms.AbstractRoom;
+import disorderlyMetronome.battleTimer.PlayerTimerPatches;
 import disorderlyMetronome.util.DisorderlyConfig;
-import org.lwjgl.BufferUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -80,12 +82,17 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         String[] optionsMenuTimeAttackModeText = optionsMenuTimeAttackModeStrings.TEXT;
         UIStrings optionsMenuCooldownModeStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenuCooldownMode"));
         String[] optionsMenuCooldownModeText = optionsMenuCooldownModeStrings.TEXT;
+        UIStrings optionsMenuModeExplanationStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenuModeExplanation"));
+        String[] optionsMenuModeExplanationText = optionsMenuModeExplanationStrings.TEXT;
+        UIStrings optionsMenuModeTitleStrings = CardCrawlGame.languagePack.getUIString(makeID("OptionsMenuModeTitle"));
+        String[] optionsMenuModeTitleText = optionsMenuModeTitleStrings.TEXT;
 
         settingsPanel = new ModPanel();
 
         float sliderOffset = getSliderPosition(Arrays.asList(optionsMenuGeneralText));
 
 
+        //Create Mode Selection
         ModLabel modeLabel = new ModLabel(optionsMenuGeneralText[0], LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
         ModToggleButton energyModeButton = new ModToggleButton(LAYOUT_X + sliderOffset + 50, LAYOUT_Y -5, modConfig.getString("GAMEMODE").equals(DisorderlyConfig.GameMode.ENERGY.name()), true, settingsPanel, button -> {
             modConfig.setString("GAMEMODE", DisorderlyConfig.GameMode.ENERGY.name());
@@ -112,28 +119,41 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         });
 
         LAYOUT_Y-=SPACING_Y;
-        ModRadioButtonGroup modeSelection = new ModRadioButtonGroup();
-        modeSelection.addButton(energyModeButton);
-        modeSelection.addButton(timeAttackModeButton);
-        modeSelection.addButton(cooldownModeButton);
+        ModRadioButtonGroup modeSelection = new ModRadioButtonGroup(energyModeButton,timeAttackModeButton,cooldownModeButton);
+        //modeSelection.addButton(energyModeButton);
+        //modeSelection.addButton(timeAttackModeButton);
+        //modeSelection.addButton(cooldownModeButton);
         registerUIElement(modeLabel, 1);
         registerUIElement(energyModeButton, 1);
         registerUIElement(timeAttackModeButton, 1);
         registerUIElement(cooldownModeButton, 1);
+
+        //Add Title of Individual Pages
+        ModLabel energyModeTitle = new ModLabel(optionsMenuGeneralText[0], LAYOUT_X, ORIGINAL_LAYOUT_Y + 45f, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
+
+        //Add Content of General Page
         int offset = 1;
         addPageOptions(Arrays.copyOfRange(optionsMenuGeneralText, 1 ,optionsMenuGeneralText.length), 1, offset);
         offset+= optionsMenuGeneralText.length-1;
         LAYOUT_Y=ORIGINAL_LAYOUT_Y;
-        addPageOptions(optionsMenuEnergyModeText, 2, offset);
+
+        //Add Content of Energy Mode Page
+        addPageOptions(optionsMenuModeTitleText[0], optionsMenuModeExplanationText[0], optionsMenuEnergyModeText, 2, offset);
         offset+= optionsMenuEnergyModeText.length;
         LAYOUT_Y=ORIGINAL_LAYOUT_Y;
-        addPageOptions(optionsMenuTimeAttackModeText, 3, offset);
+
+        //Add Content of Time Attack Mode Page
+        addPageOptions(optionsMenuModeTitleText[1], optionsMenuModeExplanationText[1], optionsMenuTimeAttackModeText, 3, offset);
         offset+= optionsMenuTimeAttackModeText.length;
         LAYOUT_Y=ORIGINAL_LAYOUT_Y;
-        addPageOptions(optionsMenuCooldownModeText, 4, offset);
 
+        //Add Content of Cooldown Mode Page
+        addPageOptions(optionsMenuModeTitleText[2], optionsMenuModeExplanationText[2], optionsMenuCooldownModeText, 4, offset);
+        //offset+= optionsMenuCooldownModeText.length;
+        //LAYOUT_Y=ORIGINAL_LAYOUT_Y;
 
-        ModLabeledButton FlipPageBtn = new ModLabeledButton("Next Page", LAYOUT_X + 450f, ORIGINAL_LAYOUT_Y + 45f, Settings.CREAM_COLOR, Color.WHITE, FontHelper.cardEnergyFont_L, settingsPanel,
+        //Add Next Page Button
+        ModLabeledButton FlipPageBtn = new ModLabeledButton("Next Page", LAYOUT_X + 895f, ORIGINAL_LAYOUT_Y + 45f, Settings.CREAM_COLOR, Color.WHITE, FontHelper.cardEnergyFont_L, settingsPanel,
                     button ->
                     {
                         if (pages.containsKey(curPage + 1)) {
@@ -147,6 +167,22 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
 
 
         BaseMod.registerModBadge(ImageMaster.loadImage(modID + "Resources/images/ui/chain48.png"), modID, "Mindbomber", "", settingsPanel);
+    }
+
+    private void addPageOptions(String title, String explanationText, String[] optionsText, int page, int offset) {
+        ModLabel titleLabel = new ModLabel(title, LAYOUT_X + 450f, ORIGINAL_LAYOUT_Y + 70f, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {});
+        registerUIElement(titleLabel, page);
+
+        //split explanation text on new lines
+        String[] explanationTextLines = explanationText.split(" NL ");
+        for(String explanationTextLine : explanationTextLines) {
+            ModLabel explanationLabel = new ModLabel(explanationTextLine, LAYOUT_X, LAYOUT_Y, Settings.CREAM_COLOR, FontHelper.charDescFont, settingsPanel, modLabel -> {
+            });
+            registerUIElement(explanationLabel, page);
+            LAYOUT_Y -= SPACING_Y;
+        }
+
+        addPageOptions(optionsText, page, offset);
     }
 
     private void addPageOptions(String[] optionsText, int page, int offset) {
@@ -188,6 +224,7 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         return longest + 40f;
     }
 
+    //Really large to make sure its offscreen
     private final float pageOffset = 12000f;
     private HashMap<Integer, ArrayList<IUIElement>> pages = new HashMap<Integer, ArrayList<IUIElement>>() {{
         put(1, new ArrayList<>());
@@ -195,14 +232,13 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
     private float elementSpace = 50f;
     private float yThreshold = LAYOUT_Y - elementSpace * 12;
 
+    //not used currently
     private void registerUIElement(IUIElement elem, boolean decrement) {
         settingsPanel.addUIElement(elem);
 
         int page = pages.size() + (yThreshold == LAYOUT_Y ? 1 : 0);
         if (!pages.containsKey(page)) {
             pages.put(page, new ArrayList<>());
-            LAYOUT_Y = ORIGINAL_LAYOUT_Y;
-            elem.setY(LAYOUT_Y);
         }
         if (page > curPage) {
             elem.setX(elem.getX() + pageOffset);
@@ -214,12 +250,11 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
         }
     }
 
+    //add element to given page
     private void registerUIElement(IUIElement elem, int page) {
         settingsPanel.addUIElement(elem);
         if (!pages.containsKey(page)) {
             pages.put(page, new ArrayList<>());
-            LAYOUT_Y = ORIGINAL_LAYOUT_Y;
-            elem.setY(LAYOUT_Y);
         }
         if (page > curPage) {
             elem.setX(elem.getX() + pageOffset);

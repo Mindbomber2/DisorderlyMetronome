@@ -10,8 +10,8 @@
   },
   "disorderlyMetronome:OptionsMenuEnergyMode": {
     "TEXT": [
-      "Energy Gain Rate:",
-      "Refresh After Gaining X Energy:",
+      "Gain Energy every X Seconds:",
+      "Trigger Round End Effects After Gaining X Energy:",
       "Redraw Amount:"
     ]
   },
@@ -26,6 +26,20 @@
       "Base Hand Size:",
       "Delay:",
       "Cooldown Multiplier:"
+    ]
+  },
+  "disorderlyMetronome:OptionsMenuModeTitle": {
+    "TEXT": [
+      "Energy Mode Settings",
+      "Time Attack Mode Settings",
+      "Cooldown Mode Settings"
+    ]
+  },
+  "disorderlyMetronome:OptionsMenuModeExplanation": {
+    "TEXT": [
+      "Gain Energy Every X Seconds. Pay 1 Energy to Redraw Your Hand.",
+      "Play Normal Turns With a Time Limit.",
+      "Fixed Handsize. Play 1 Card Every X Seconds. NL bBCards Are Shuffled Into The Drawpile after Playing (Cost*Multiplier) Other Cards."
     ]
   }
 }
