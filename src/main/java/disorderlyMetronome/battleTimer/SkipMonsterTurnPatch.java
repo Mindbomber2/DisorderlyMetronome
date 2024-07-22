@@ -13,7 +13,7 @@ public class SkipMonsterTurnPatch {
     public static void skipMonsterTurn() {
         AbstractDungeon.actionManager.addToBottom(new SkipEnemiesTurnAction());
         if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN || DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY) {
-            PlayerCountdownPatch.PatchIntoTimer.resetTimer(AbstractDungeon.player);
+            PlayerTimerPatches.PlayerTimerPatch.resetTimer(AbstractDungeon.player);
         }
     }
 }

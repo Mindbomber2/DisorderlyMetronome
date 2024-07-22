@@ -2,7 +2,6 @@ package disorderlyMetronome.cardLogic;
 
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
-import disorderlyMetronome.util.DisorderlyConfig;
 
 import java.util.ArrayList;
 

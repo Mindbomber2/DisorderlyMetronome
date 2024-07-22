@@ -14,7 +14,7 @@ import java.util.Random;
 public class AbstractMonsterPatch {
 
     @SpirePatch(clz = AbstractMonster.class, method = SpirePatch.CLASS)
-    public static class patchIntoTimer {
+    public static class MonsterTimerPatch {
         public static SpireField<Float> currentMonsterTimer = new SpireField<>(() -> 10f);
         public static SpireField<Float> currentMaxMonsterTimer = new SpireField<>(() -> 10f);
 
@@ -32,11 +32,12 @@ public class AbstractMonsterPatch {
                         f = DisorderlyConfig.monsterTimerNormal;
                         break;
                     default:
-                       throw new IllegalArgumentException("Wtf. New Monster Type just dropped");
+                        throw new IllegalArgumentException("Wtf. New Monster Type just dropped");
                 }
 
                 Random random = new Random();
-                f += random.nextInt((int)DisorderlyConfig.monsterTimerVariance*2) - DisorderlyConfig.monsterTimerVariance;
+                //modify timer by random amount in range [-variance,+variance]
+                f += random.nextInt((int) DisorderlyConfig.monsterTimerVariance * 2) - DisorderlyConfig.monsterTimerVariance;
             }
             return f;
         }
@@ -56,36 +57,46 @@ public class AbstractMonsterPatch {
                     float.class
             }
     )
-
     public static class constructorTimer {
         @SpirePostfixPatch
         public static void timerCtorPatch(AbstractMonster __instance, String name, String id, int maxHealth, float hb_x, float hb_y, float hb_w, float hb_h, String imgUrl, float offsetX, float offsetY) {
             System.out.println("Patching ctor of " + __instance.name);
             System.out.println("Hitbox Width: " + __instance.hb.width);
-            float calculatedTime = patchIntoTimer.calculateTime(__instance);
-            patchIntoTimer.currentMonsterTimer.set(__instance, calculatedTime);
-            patchIntoTimer.currentMaxMonsterTimer.set(__instance, calculatedTime);
+            float calculatedTime = MonsterTimerPatch.calculateTime(__instance);
+            MonsterTimerPatch.currentMonsterTimer.set(__instance, calculatedTime);
+            MonsterTimerPatch.currentMaxMonsterTimer.set(__instance, calculatedTime);
         }
     }
 
     @SpirePatch(clz = AbstractMonster.class, method = "render")
-    public static class timerRenderPatch {
+    public static class HandleMonsterTimerPatch {
         @SpirePostfixPatch
-        public static void timerCtorPatch(AbstractMonster __instance, SpriteBatch sb) {
+        public static void handleMonsterTimer(AbstractMonster __instance, SpriteBatch sb) {
+            //draw timer
             if (!__instance.isDeadOrEscaped()) {
-                DrawHealthbarTimers.drawMonsterTimer(sb, __instance, patchIntoTimer.currentMonsterTimer.get(__instance),
-                        patchIntoTimer.currentMaxMonsterTimer.get(__instance));
+                DrawHealthbarTimers.drawMonsterTimer(sb, __instance, MonsterTimerPatch.currentMonsterTimer.get(__instance),
+                        MonsterTimerPatch.currentMaxMonsterTimer.get(__instance));
             }
+            //calculate timer
             if (!AbstractDungeon.isScreenUp) {
-                patchIntoTimer.currentMonsterTimer.set(__instance,
-                        patchIntoTimer.currentMonsterTimer.get(__instance) - Gdx.graphics.getDeltaTime());
-                if (patchIntoTimer.currentMonsterTimer.get(__instance) <= 0f) {
-                    AbstractDungeon.actionManager.addToBottom(new monsterTakeTurnAction(__instance));
-                    TurnbasedPowerStuff.triggerMonsterTurnPowers(__instance);
-                    float calculatedTime = patchIntoTimer.calculateTime(__instance);
-                    patchIntoTimer.currentMonsterTimer.set(__instance, calculatedTime);
-                    patchIntoTimer.currentMaxMonsterTimer.set(__instance, calculatedTime);
+                //speed up timer if in time attack mode and it's nobodies turn otherwise pause
+                if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.TIMEATTACK) {
+                    if (PlayerTimerPatches.PlayerTimerPatch.timeAttackIsPlayerTurn.get(AbstractDungeon.player) == false && PlayerTimerPatches.PlayerTimerPatch.timeAttackIsMonsterTurn.get(AbstractDungeon.player) == false) {
+                        MonsterTimerPatch.currentMonsterTimer.set(__instance,
+                                MonsterTimerPatch.currentMonsterTimer.get(__instance) - (5 * Gdx.graphics.getDeltaTime()));
+                    }
+                } else {
+                    MonsterTimerPatch.currentMonsterTimer.set(__instance,
+                            MonsterTimerPatch.currentMonsterTimer.get(__instance) - Gdx.graphics.getDeltaTime());
                 }
+            }
+            //trigger turn
+            if (MonsterTimerPatch.currentMonsterTimer.get(__instance) <= 0f) {
+                AbstractDungeon.actionManager.addToBottom(new monsterTakeTurnAction(__instance));
+                TurnbasedPowerStuff.triggerMonsterTurnPowers(__instance);
+                float calculatedTime = MonsterTimerPatch.calculateTime(__instance);
+                MonsterTimerPatch.currentMonsterTimer.set(__instance, calculatedTime);
+                MonsterTimerPatch.currentMaxMonsterTimer.set(__instance, calculatedTime);
             }
         }
     }

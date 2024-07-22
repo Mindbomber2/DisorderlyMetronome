@@ -4,6 +4,8 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.evacipated.cardcrawl.modthespire.lib.*;
+import com.megacrit.cardcrawl.actions.common.DiscardAction;
+import com.megacrit.cardcrawl.actions.common.DrawCardAction;
 import com.megacrit.cardcrawl.actions.common.GainEnergyAction;
 import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
@@ -14,23 +16,22 @@ import com.megacrit.cardcrawl.relics.AbstractRelic;
 import com.megacrit.cardcrawl.ui.panels.EnergyPanel;
 import disorderlyMetronome.cardLogic.ProjectedCardManager;
 import disorderlyMetronome.util.DisorderlyConfig;
-import disorderlyMetronome.util.RedrawAction;
 import javassist.CannotCompileException;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
 
-import javax.sound.midi.Patch;
 
-
-public class PlayerCountdownPatch {
+public class PlayerTimerPatches {
 
     @SpirePatch(clz = AbstractPlayer.class, method = SpirePatch.CLASS)
-    public static class PatchIntoTimer {
+    public static class PlayerTimerPatch {
         public static SpireField<Boolean> canPlayCard = new SpireField<>(() -> false);
         public static SpireField<Integer> cyclesThisTurn = new SpireField<>(() -> 0);
         public static SpireField<Boolean> isTriggeringEndOfTurn = new SpireField<>(() -> false);
         public static SpireField<Float> currentPlayerTimer = new SpireField<>(() -> 10f);
         public static SpireField<Float> currentMaxPlayerTimer = new SpireField<>(() -> 10f);
+        public static SpireField<Boolean> timeAttackIsPlayerTurn = new SpireField<>(() -> false);
+        public static SpireField<Boolean> timeAttackIsMonsterTurn = new SpireField<>(() -> false);
 
         //TODO: fix calculation for first turn. Probably use start of combat hook
         public static float calculateTime(AbstractPlayer __instance) {
@@ -55,9 +56,18 @@ public class PlayerCountdownPatch {
         }
 
         public static void resetTimer(AbstractPlayer p) {
-            float calculatedTime = PatchIntoTimer.calculateTime(p);
-            PatchIntoTimer.currentPlayerTimer.set(p, calculatedTime);
-            PatchIntoTimer.currentMaxPlayerTimer.set(p, calculatedTime);
+            float calculatedTime = PlayerTimerPatch.calculateTime(p);
+            PlayerTimerPatch.currentPlayerTimer.set(p, calculatedTime);
+            PlayerTimerPatch.currentMaxPlayerTimer.set(p, calculatedTime);
+        }
+
+        public static void onBattleStart(AbstractPlayer p) {
+            System.out.println("onBattleStart call");
+            resetTimer(p);
+            timeAttackIsPlayerTurn.set(p, true);
+            timeAttackIsMonsterTurn.set(p, false);
+            cyclesThisTurn.set(p, 0);
+            canPlayCard.set(p, false);
         }
     }
 
@@ -72,29 +82,29 @@ public class PlayerCountdownPatch {
         @SpirePostfixPatch
         public static void timerCtorPatch(AbstractPlayer __instance) {
             System.out.println("Patching ctor of " + __instance.name);
-            float calculatedTime = PatchIntoTimer.calculateTime(__instance);
-            PatchIntoTimer.currentPlayerTimer.set(__instance, calculatedTime);
-            PatchIntoTimer.currentMaxPlayerTimer.set(__instance, calculatedTime);
+            float calculatedTime = PlayerTimerPatch.calculateTime(__instance);
+            PlayerTimerPatch.currentPlayerTimer.set(__instance, calculatedTime);
+            PlayerTimerPatch.currentMaxPlayerTimer.set(__instance, calculatedTime);
         }
     }
 
 
     //   ty Alison again
     public static class EnergyPanelModificationPatches {
-        public static boolean overridePanel(){
+        public static boolean overridePanel() {
             return DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN;
         }
 
         public static String getMessage() {
-                return String.valueOf(PatchIntoTimer.currentPlayerTimer.get(AbstractDungeon.player).intValue());
+            return String.valueOf(PlayerTimerPatch.currentPlayerTimer.get(AbstractDungeon.player).intValue());
         }
 
         public static Color getColor() {
             AbstractPlayer p = AbstractDungeon.player;
             Color color = Color.YELLOW;
-            if (Math.floor(PatchIntoTimer.currentPlayerTimer.get(p)) > 2 * PatchIntoTimer.currentMaxPlayerTimer.get(p) / 3) {
+            if (Math.floor(PlayerTimerPatch.currentPlayerTimer.get(p)) > 2 * PlayerTimerPatch.currentMaxPlayerTimer.get(p) / 3) {
                 color = Color.GREEN;
-            } else if (Math.floor(PatchIntoTimer.currentPlayerTimer.get(p)) < PatchIntoTimer.currentMaxPlayerTimer.get(p) / 3) {
+            } else if (Math.floor(PlayerTimerPatch.currentPlayerTimer.get(p)) < PlayerTimerPatch.currentMaxPlayerTimer.get(p) / 3) {
                 color = Color.RED;
             }
             return color;
@@ -113,10 +123,10 @@ public class PlayerCountdownPatch {
                             m.replace("{" +
                                     //$3 refers to the third input parameter of the method, in this case the message
                                     //You need the full package to your class for this to work
-                                    "if("+EnergyPanelModificationPatches.class.getName()+".overridePanel()){" +
-                                    "$3 = "+EnergyPanelModificationPatches.class.getName()+".getMessage();" +
-                                    "$6 = "+EnergyPanelModificationPatches.class.getName()+".getColor();" +
-                                    "}"+
+                                    "if(" + EnergyPanelModificationPatches.class.getName() + ".overridePanel()){" +
+                                    "$3 = " + EnergyPanelModificationPatches.class.getName() + ".getMessage();" +
+                                    "$6 = " + EnergyPanelModificationPatches.class.getName() + ".getColor();" +
+                                    "}" +
                                     //Call the method as normal
                                     "$proceed($$);" +
                                     "}");
@@ -132,41 +142,69 @@ public class PlayerCountdownPatch {
         @SpirePostfixPatch
         public static void letItGoDown() {
 
-            AbstractPlayer p = AbstractDungeon.player;
+            AbstractPlayer player = AbstractDungeon.player;
             if (!AbstractDungeon.isScreenUp) {
-                PatchIntoTimer.currentPlayerTimer.set(p,
-                        PatchIntoTimer.currentPlayerTimer.get(p) - Gdx.graphics.getDeltaTime());
-                if (PatchIntoTimer.currentPlayerTimer.get(p) <= 0f) {
+                //Speed up timers if nobodys turn in time attack
+                //TODO: Add vault visuals during speedup maybe?
+                if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.TIMEATTACK && PlayerTimerPatch.timeAttackIsPlayerTurn.get(player) == false && PlayerTimerPatch.timeAttackIsMonsterTurn.get(player) == false) {
+                    PlayerTimerPatch.currentPlayerTimer.set(player,
+                            PlayerTimerPatch.currentPlayerTimer.get(player) - (5 * Gdx.graphics.getDeltaTime()));
+                    //pause timer if in time attack mode and it's a monster's turn
+                } else if (DisorderlyConfig.gameMode != DisorderlyConfig.GameMode.TIMEATTACK || PlayerTimerPatches.PlayerTimerPatch.timeAttackIsMonsterTurn.get(AbstractDungeon.player) == false) {
+                    PlayerTimerPatch.currentPlayerTimer.set(player,
+                            PlayerTimerPatch.currentPlayerTimer.get(player) - Gdx.graphics.getDeltaTime());
+                }
+
+                if (PlayerTimerPatch.currentPlayerTimer.get(player) <= 0f) {
                     if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN) {
-                        PatchIntoTimer.canPlayCard.set(p, true);
+                        PlayerTimerPatch.canPlayCard.set(player, true);
                         ProjectedCardManager.playCards();
                     } else if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY) {
-                        if(EnergyPanel.totalCount<p.energy.energyMaster)
-                        AbstractDungeon.actionManager.addToTop(new GainEnergyAction(1));
+                        if (EnergyPanel.totalCount < player.energy.energyMaster)
+                            AbstractDungeon.actionManager.addToTop(new GainEnergyAction(1));
                     }
-                    PatchIntoTimer.cyclesThisTurn.set(p, PatchIntoTimer.cyclesThisTurn.get(p) + 1);
+                    PlayerTimerPatch.cyclesThisTurn.set(player, PlayerTimerPatch.cyclesThisTurn.get(player) + 1);
 
-                    if (PatchIntoTimer.cyclesThisTurn.get(p) >= 3 && DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN) {
+                    if ((DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN && PlayerTimerPatch.cyclesThisTurn.get(player) >= 3)
+                            || (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY && PlayerTimerPatch.cyclesThisTurn.get(player) >= DisorderlyConfig.triggerRoundEndEffectAfterXEnergy)) {
                         triggerEndOfTurn();
-                    } else if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY) {
-                        if(PatchIntoTimer.cyclesThisTurn.get(p) >= DisorderlyConfig.refreshAfterXEnergy){
-                            triggerEndOfTurn();
+                        triggerStartOfTurn();
+                    } else if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.TIMEATTACK) {
+                        if (PlayerTimerPatch.timeAttackIsPlayerTurn.get(player) == true) {
+                            timeAttackEndTurn();
+                            //20 Second delay until next turn
+                            PlayerTimerPatch.currentPlayerTimer.set(player, 20f);
+                            PlayerTimerPatch.currentMaxPlayerTimer.set(player, 20f);
+                        } else {
+                            AbstractDungeon.actionManager.addToTop(new DrawCardAction(5));
+                            player.energy.recharge();
+                            player.loseBlock(player.currentBlock/2);
+                            triggerStartOfTurn();
+                            PlayerTimerPatch.timeAttackIsPlayerTurn.set(player, true);
                         }
+
+
                     }
-                    PatchIntoTimer.resetTimer(p);
                 }
             }
         }
 
+        public static void timeAttackEndTurn() {
+            AbstractPlayer player = AbstractDungeon.player;
+            //player.endTurnQueued=true;
+            triggerEndOfTurn();
+            AbstractDungeon.actionManager.addToBottom(new DiscardAction(player, null, AbstractDungeon.player.hand.size(), true, true));
+            PlayerTimerPatch.timeAttackIsPlayerTurn.set(player, false);
+        }
+
         private static void triggerEndOfTurn() {
             AbstractPlayer p = AbstractDungeon.player;
-            PatchIntoTimer.isTriggeringEndOfTurn.set(p, true);
+            PlayerTimerPatch.isTriggeringEndOfTurn.set(p, true);
             for (AbstractPower power : p.powers) {
                 power.atEndOfTurnPreEndTurnCards(true);
                 power.atEndOfTurn(true);
                 power.atEndOfRound();
-                power.atStartOfTurn();
-                power.atStartOfTurnPostDraw();
+
             }
             for (AbstractCard card : p.hand.group) {
                 if (card.retain || card.selfRetain) {
@@ -174,32 +212,45 @@ public class PlayerCountdownPatch {
                 }
                 card.triggerOnEndOfPlayerTurn();
                 card.triggerOnEndOfTurnForPlayingCard();
+            }
+            for (AbstractRelic r : p.relics) {
+                r.onPlayerEndTurn();
+            }
+        }
+
+        private static void triggerStartOfTurn() {
+            AbstractPlayer p = AbstractDungeon.player;
+            for (AbstractPower power : p.powers) {
+                power.atStartOfTurn();
+                power.atStartOfTurnPostDraw();
+            }
+            for (AbstractCard card : p.hand.group) {
                 card.atTurnStartPreDraw();
                 card.atTurnStart();
             }
             for (AbstractRelic r : p.relics) {
-                r.onPlayerEndTurn();
                 r.atTurnStart();
                 r.atTurnStartPostDraw();
             }
-            PatchIntoTimer.cyclesThisTurn.set(p, 0);
-            PatchIntoTimer.isTriggeringEndOfTurn.set(p, false);
+            PlayerTimerPatch.cyclesThisTurn.set(p, 0);
+            PlayerTimerPatch.isTriggeringEndOfTurn.set(p, false);
+            PlayerTimerPatch.resetTimer(p);
         }
     }
 
     @SpirePatch(clz = AbstractPlayer.class, method = "render")
-    public static class RenderEnergyGainBar {
+    public static class RenderPlayerTimerBar {
         @SpirePostfixPatch
-        public static void timerCtorPatch(AbstractPlayer __instance, SpriteBatch sb) {
+        public static void renderPlayerTimer(AbstractPlayer __instance, SpriteBatch sb) {
             if (!__instance.isDeadOrEscaped()) {
-                DrawHealthbarTimers.drawPlayerTimer(sb, __instance, PlayerCountdownPatch.PatchIntoTimer.currentPlayerTimer.get(__instance),
-                        PlayerCountdownPatch.PatchIntoTimer.currentMaxPlayerTimer.get(__instance));
+                DrawHealthbarTimers.drawPlayerTimer(sb, __instance, PlayerTimerPatch.currentPlayerTimer.get(__instance),
+                        PlayerTimerPatch.currentMaxPlayerTimer.get(__instance));
             }
             if (!AbstractDungeon.isScreenUp) {
-                if (PlayerCountdownPatch.PatchIntoTimer.currentPlayerTimer.get(__instance) <= 0f) {
-                    float calculatedTime = PlayerCountdownPatch.PatchIntoTimer.calculateTime(__instance);
-                    PlayerCountdownPatch.PatchIntoTimer.currentPlayerTimer.set(__instance, calculatedTime);
-                    PlayerCountdownPatch.PatchIntoTimer.currentMaxPlayerTimer.set(__instance, calculatedTime);
+                if (PlayerTimerPatch.currentPlayerTimer.get(__instance) <= 0f) {
+                    float calculatedTime = PlayerTimerPatch.calculateTime(__instance);
+                    PlayerTimerPatch.currentPlayerTimer.set(__instance, calculatedTime);
+                    PlayerTimerPatch.currentMaxPlayerTimer.set(__instance, calculatedTime);
                 }
             }
         }

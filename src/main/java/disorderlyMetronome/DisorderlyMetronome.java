@@ -20,7 +20,7 @@ import java.util.*;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 @SpireInitializer
-public class DisorderlyMetronome implements PostInitializeSubscriber, EditStringsSubscriber{
+public class DisorderlyMetronome implements PostInitializeSubscriber, EditStringsSubscriber, OnStartBattleSubscriber{
 
     public static final String modID = "disorderlyMetronome";
 
@@ -271,5 +271,11 @@ public class DisorderlyMetronome implements PostInitializeSubscriber, EditString
             e.setX(e.getX() - pageOffset);
         }
         curPage = i;
+    }
+
+
+    @Override
+    public void receiveOnBattleStart(AbstractRoom abstractRoom) {
+        PlayerTimerPatches.PlayerTimerPatch.onBattleStart(AbstractDungeon.player);
     }
 }

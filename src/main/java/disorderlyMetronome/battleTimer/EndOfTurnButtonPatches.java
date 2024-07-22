@@ -16,11 +16,15 @@ public class EndOfTurnButtonPatches {
     public static class RefreshFunction {
         @SpireInsertPatch(rloc = 8)
         public static SpireReturn<?> makeButtonRefresh(EndTurnButton __instance) {
-            if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY || !PlayerCountdownPatch.PatchIntoTimer.isTriggeringEndOfTurn.get(AbstractDungeon.player)) {
-RefreshBoolean.isRefreshing.set(__instance, true);
-            AbstractDungeon.actionManager.addToBottom(new LoseEnergyAction(1));
+            if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY && !PlayerTimerPatches.PlayerTimerPatch.isTriggeringEndOfTurn.get(AbstractDungeon.player)) {
+                RefreshBoolean.isRefreshing.set(__instance, true);
+                AbstractDungeon.actionManager.addToBottom(new LoseEnergyAction(1));
                 AbstractDungeon.actionManager.addToBottom(new DiscardAction(AbstractDungeon.player, null, AbstractDungeon.player.hand.size(), true, true));
                 AbstractDungeon.actionManager.addToBottom((new RedrawAction()));
+                return SpireReturn.Return();
+            } else if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.TIMEATTACK && !PlayerTimerPatches.PlayerTimerPatch.isTriggeringEndOfTurn.get(AbstractDungeon.player)) {
+                PlayerTimerPatches.PlayerTimerPatch.currentPlayerTimer.set(AbstractDungeon.player, 0f);
+                PlayerTimerPatches.PlayerCooldownUpdatePatch.timeAttackEndTurn();
                 return SpireReturn.Return();
             } else {
                 return SpireReturn.Continue();
@@ -44,9 +48,11 @@ RefreshBoolean.isRefreshing.set(__instance, true);
     @SpirePatch2(clz = EndTurnButton.class, method = "update")
     public static class ButtonEnabling {
         @SpirePrefixPatch()
-        public static void makeItSayRefresh(EndTurnButton __instance) {
+        public static void makeItEnabled(EndTurnButton __instance) {
             if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.ENERGY) {
                 __instance.enabled = EnergyPanel.totalCount >= 1 && !RefreshBoolean.isRefreshing.get(__instance);
+            } else if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.TIMEATTACK) {
+                __instance.enabled = PlayerTimerPatches.PlayerTimerPatch.timeAttackIsPlayerTurn.get(AbstractDungeon.player);
             }
         }
     }

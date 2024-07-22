@@ -14,10 +14,11 @@ public abstract class DisorderlyConfig {
 
     //energy mode config
     public static float energyGainRate = -1f;
-    public static float refreshAfterXEnergy = -1f;
+    public static float triggerRoundEndEffectAfterXEnergy = -1f;
     public static float redrawAmount = -1f;
 
     //time attack mode config
+    //TODO: Time Attack Mode (End Turn, Pause Timer etc)
     public static float baseTurnDuration = -1f;
     public static float turnDurationBonus = -1f;
 
@@ -35,7 +36,7 @@ public abstract class DisorderlyConfig {
         monsterTimerBoss= modConfig.getFloat(ConfigurationVariable.MONSTER_TIMER_BOSS.name());
         monsterTimerVariance= modConfig.getFloat(ConfigurationVariable.MONSTER_TIMER_VARIANCE.name());
         energyGainRate= modConfig.getFloat(ConfigurationVariable.ENERGY_GAIN_RATE.name());
-        refreshAfterXEnergy= modConfig.getFloat(ConfigurationVariable.REFRESH_AFTER_X_ENERGY.name());
+        triggerRoundEndEffectAfterXEnergy = modConfig.getFloat(ConfigurationVariable.REFRESH_AFTER_X_ENERGY.name());
         redrawAmount= modConfig.getFloat(ConfigurationVariable.REDRAW_AMOUNT.name());
         baseTurnDuration= modConfig.getFloat(ConfigurationVariable.BASE_TURN_DURATION.name());
         turnDurationBonus= modConfig.getFloat(ConfigurationVariable.TURN_DURATION_BONUS.name());

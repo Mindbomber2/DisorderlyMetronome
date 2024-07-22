@@ -4,7 +4,6 @@ import com.megacrit.cardcrawl.actions.AbstractGameAction;
 import com.megacrit.cardcrawl.actions.common.DrawCardAction;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import disorderlyMetronome.battleTimer.EndOfTurnButtonPatches;
-import disorderlyMetronome.battleTimer.PlayerCountdownPatch;
 
 public class RedrawAction extends AbstractGameAction {
 

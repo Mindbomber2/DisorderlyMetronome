@@ -8,7 +8,7 @@ import com.megacrit.cardcrawl.cards.AbstractCard;
 import com.megacrit.cardcrawl.characters.AbstractPlayer;
 import com.megacrit.cardcrawl.dungeons.AbstractDungeon;
 import com.megacrit.cardcrawl.monsters.AbstractMonster;
-import disorderlyMetronome.battleTimer.PlayerCountdownPatch;
+import disorderlyMetronome.battleTimer.PlayerTimerPatches;
 import disorderlyMetronome.util.DisorderlyConfig;
 
 public class AbstractPlayerUseCardPatch {
@@ -17,11 +17,11 @@ public class AbstractPlayerUseCardPatch {
         @SpirePrefixPatch
         public static SpireReturn<Void> stopPlay(AbstractPlayer __instance, AbstractCard c, AbstractMonster monster, int energyOnUse) {
             if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.COOLDOWN) {
-                if (PlayerCountdownPatch.PatchIntoTimer.canPlayCard.get(AbstractDungeon.player) == false) {
+                if (PlayerTimerPatches.PlayerTimerPatch.canPlayCard.get(AbstractDungeon.player) == false) {
                     AbstractDungeon.actionManager.addToBottom(new HoldCardAction(c, monster, energyOnUse));
                     return SpireReturn.Return();
                 } else {
-                    PlayerCountdownPatch.PatchIntoTimer.canPlayCard.set(AbstractDungeon.player, false);
+                    PlayerTimerPatches.PlayerTimerPatch.canPlayCard.set(AbstractDungeon.player, false);
                     AbstractDungeon.actionManager.addToBottom(new DrawCardAction(1));
                     CooldownManager.reduceCooldowns();
                     return SpireReturn.Continue();
