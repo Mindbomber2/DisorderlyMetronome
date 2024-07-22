@@ -21,6 +21,7 @@ public class EndOfTurnButtonPatches {
                 AbstractDungeon.actionManager.addToBottom(new LoseEnergyAction(1));
                 AbstractDungeon.actionManager.addToBottom(new DiscardAction(AbstractDungeon.player, null, AbstractDungeon.player.hand.size(), true, true));
                 AbstractDungeon.actionManager.addToBottom((new RedrawAction()));
+                AbstractDungeon.player.loseBlock();
                 return SpireReturn.Return();
             } else if (DisorderlyConfig.gameMode == DisorderlyConfig.GameMode.TIMEATTACK && !PlayerTimerPatches.PlayerTimerPatch.isTriggeringEndOfTurn.get(AbstractDungeon.player)) {
                 PlayerTimerPatches.PlayerTimerPatch.currentPlayerTimer.set(AbstractDungeon.player, 0f);

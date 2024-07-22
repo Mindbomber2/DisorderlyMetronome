@@ -39,7 +39,7 @@
     "TEXT": [
       "Gain Energy Every X Seconds. Pay 1 Energy to Redraw Your Hand.",
       "Play Normal Turns With a Time Limit.",
-      "Fixed Handsize. Play 1 Card Every X Seconds. NL bBCards Are Shuffled Into The Drawpile after Playing (Cost*Multiplier) Other Cards."
+      "Fixed Handsize. Play 1 Card Every X Seconds. NL Cards Are Shuffled Into The Drawpile After Playing (Cost*Multiplier) Other Cards."
     ]
   }
 }
